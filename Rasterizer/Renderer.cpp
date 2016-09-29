@@ -114,20 +114,20 @@ void Renderer::fillTopHalfTri(float x0, float x1, float y01, float x2, float y2)
 	}
 }
 
-void asdasd(Buffer * b, float yLo, float yHi, const vec<3> & pa, const vec<3> & pb, const vec<3> & pd)
+void asdasd(Buffer * b, float yLo, float yHi, float x0, const vec<3> & pb, const vec<3> & pd)
 {
-	float denom0 = 1.0f / (pb.y() - pa.y());
-	float denom1 = 1.0f / (pd.y() - pa.y());
+	float denom0 = 1.0f / (pb.y() - yLo);
+	float denom1 = 1.0f / (pd.y() - yLo);
 	
 	int yBegin = yLo, yEnd = ceil(yHi);
 
 	for (int y = yLo; y < yHi; y++)
 	{
-		float t0 = (y - pa.y()) * denom0;
-		float t1 = (y - pa.y()) * denom1;
+		float t0 = (y - yLo) * denom0;
+		float t1 = (y - yLo) * denom1;
 
-		int sx = (int)lerp(pa.x(), pb.x(), t0);
-		int ex = (int)lerp(pa.x(), pd.x(), t1);
+		int sx = (int)lerp(x0, pb.x(), t0);
+		int ex = (int)lerp(x0, pd.x(), t1);
 
 		for (int x = sx; x < ex; x++)
 		{
@@ -137,17 +137,23 @@ void asdasd(Buffer * b, float yLo, float yHi, const vec<3> & pa, const vec<3> & 
 	
 }
 
-void qweqwe(Buffer * b, int y, const vec<3> & pa, const vec<3> & pb, const vec<3> & pc)
+void qweqwe(Buffer * b, float yLo, float yHi, const vec<3> & pa, const vec<3> & pb, const vec<3> & pc)
 {
-	float t0 = pa.y() != pb.y() ? (y - pa.y()) / (pb.y() - pa.y()) : 1;
-	float t1 = pc.y() != pb.y() ? (y - pc.y()) / (pb.y() - pc.y()) : 1;
 
-	int sx = (int)lerp(pa.x(), pb.x(), t0);
-	int ex = (int)lerp(pc.x(), pb.x(), t1);
+	int yBegin = ceil(yLo), yEnd = floor(yHi);
 
-	for (int x = sx; x < ex; x++)
+	for (int y = yBegin; y <= yEnd; y++)
 	{
-		b->color(x, y) += 127;
+		float t0 = pa.y() != pb.y() ? (y - pa.y()) / (pb.y() - pa.y()) : 1;
+		float t1 = pc.y() != pb.y() ? (y - pc.y()) / (pb.y() - pc.y()) : 1;
+
+		int sx = (int)lerp(pa.x(), pb.x(), t0);
+		int ex = (int)lerp(pc.x(), pb.x(), t1);
+
+		for (int x = sx; x < ex; x++)
+		{
+			b->color(x, y) += 127;
+		}
 	}
 }
 
@@ -173,19 +179,13 @@ void Renderer::drawTriangle(const Triangle & t)
 
 	if (invSlope0 > invSlope1)
 	{
-		asdasd(mRenderTarget, V0.y(), V1.y(), V0, V2, V1);
-		for (int y = ceil(V1.y()); y <= V2.y(); y++)
-		{
-			qweqwe(mRenderTarget, y, V0, V2, V1);
-		}
+		asdasd(mRenderTarget, V0.y(), V1.y(), V0.x(), V2, V1);
+		qweqwe(mRenderTarget, V1.y(), V2.y(), V0, V2, V1);
 	}
 	else
 	{
-		asdasd(mRenderTarget, V0.y(), V1.y(), V0, V1, V2);
-		for (int y = ceil(V1.y()); y <= V2.y(); y++)
-		{
-			qweqwe(mRenderTarget, y, V1, V2, V0);
-		}
+		asdasd(mRenderTarget, V0.y(), V1.y(), V0.x(), V1, V2);
+		qweqwe(mRenderTarget, V1.y(), V2.y(), V1, V2, V0);
 	}
 
 
