@@ -1,10 +1,12 @@
 #include "stdafx.h"
 #include "PreviewFrame.h"
 
-#include "ImagePanel.h"
-
 #include <chrono>
 #include <sstream>
+
+#include "ImagePanel.h"
+#include "Triangle.h"
+
 
 wxBEGIN_EVENT_TABLE(PreviewFrame, wxFrame)
 	EVT_MENU(wxID_EXIT, PreviewFrame::OnExit)
@@ -61,8 +63,26 @@ std::chrono::high_resolution_clock::time_point lastFrame;
 
 void PreviewFrame::OnIdle(wxIdleEvent & event)
 {
+	static float a = 0.0f;
+	a += 0.002f;
 	mRenderer.setRenderTarget(&mBuffer);
-	mRenderer.clearColor(255, 128, 0, 255);
+	mRenderer.clearColor(0, 0, 0, 255);
+	
+	const float radius = 200, offset = 50;
+
+	float s, c;
+	s = sin(a);
+	c = cos(a);
+	Triangle t;
+	t.v[0] = vec<3>(offset + radius * (s + 1), offset + radius * (c + 1), 0);
+	t.v[1] = vec<3>(offset + radius, offset + radius * 0.5f, 0);
+	t.v[2] = vec<3>(offset + radius * 0.5f, offset + radius, 0);
+	mRenderer.drawTriangle(t);
+
+	s = sin(a + 2.0f);
+	c = cos(a + 2.0f);
+	t.v[0] = vec<3>(offset + radius * (s + 1), offset + radius * (c + 1), 0);
+	mRenderer.drawTriangle(t);
 	mRenderer.present(imagePanel);
 
 	wxPaintEvent unused;

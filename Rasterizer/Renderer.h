@@ -17,6 +17,11 @@ public:
 	void clearColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	void clearColor(uint32_t color);
 	void clearDepth(float depth);
+	void setTransformMatrix();
+	void drawTriangle(const class Triangle & t);
+private:
+	void Renderer::fillTopFlatTri(float x0, float x1, float yt, float xb, float yb);
+	void Renderer::fillBottomFlatTri(float x0, float x1, float yb, float xt, float yt);
 };
 
 
