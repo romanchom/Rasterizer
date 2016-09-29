@@ -20,8 +20,8 @@ public:
 	void setTransformMatrix();
 	void drawTriangle(const class Triangle & t);
 private:
-	void Renderer::fillTopFlatTri(float x0, float x1, float yt, float xb, float yb);
-	void Renderer::fillBottomFlatTri(float x0, float x1, float yb, float xt, float yt);
+	void fillBottomHalfTri(float x0, float x1, float yt, float xb, float yb);
+	void fillTopHalfTri(float x0, float x1, float yb, float xt, float yt);
 };
 
 

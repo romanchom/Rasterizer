@@ -68,21 +68,21 @@ void PreviewFrame::OnIdle(wxIdleEvent & event)
 	mRenderer.setRenderTarget(&mBuffer);
 	mRenderer.clearColor(0, 0, 0, 255);
 	
-	const float radius = 200, offset = 50;
+	const float radius = 200.33f, offset = 250.524f;
+	int count = 6;
+	for (int i = 0; i < count; ++i) {
+		float s, c;
+		Triangle t;
+		t.v[0] = vec<3>(offset, offset, 0);
+		s = sin(a + M_PI * 2 * i / count);
+		c = cos(a + M_PI * 2 * i / count);
+		t.v[1] = vec<3>(offset + radius * s, offset + radius * c, 0);
+		s = sin(a + M_PI * 2 * (i + 1) / count);
+		c = cos(a + M_PI * 2 * (i + 1) / count);
+		t.v[2] = vec<3>(offset + radius * s, offset + radius * c, 0);
+		mRenderer.drawTriangle(t);
+	}
 
-	float s, c;
-	s = sin(a);
-	c = cos(a);
-	Triangle t;
-	t.v[0] = vec<3>(offset + radius * (s + 1), offset + radius * (c + 1), 0);
-	t.v[1] = vec<3>(offset + radius, offset + radius * 0.5f, 0);
-	t.v[2] = vec<3>(offset + radius * 0.5f, offset + radius, 0);
-	mRenderer.drawTriangle(t);
-
-	s = sin(a + 2.0f);
-	c = cos(a + 2.0f);
-	t.v[0] = vec<3>(offset + radius * (s + 1), offset + radius * (c + 1), 0);
-	mRenderer.drawTriangle(t);
 	mRenderer.present(imagePanel);
 
 	wxPaintEvent unused;
