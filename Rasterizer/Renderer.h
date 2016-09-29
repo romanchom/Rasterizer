@@ -20,8 +20,16 @@ public:
 	void setTransformMatrix();
 	void drawTriangle(const class Triangle & t);
 private:
-	void fillBottomHalfTri(float x0, float x1, float yt, float xb, float yb);
-	void fillTopHalfTri(float x0, float x1, float yb, float xt, float yt);
+	struct TriangleFillParams {
+		float yLow;
+		float yHigh;
+		float x0;
+		vec<2> vLeft;
+		vec<2> vRight;
+		vec<2> baryCoords[3];
+	};
+	void fillBottomHalfTri(const TriangleFillParams & t);
+	void fillTopHalfTri(const TriangleFillParams & t);
 };
 
 
