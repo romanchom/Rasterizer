@@ -68,18 +68,18 @@ void PreviewFrame::OnIdle(wxIdleEvent & event)
 	mRenderer.setRenderTarget(&mBuffer);
 	mRenderer.clearColor(0, 0, 0, 255);
 	
-	const float radius = 200.33f, offset = 250.524f;
+	const float radius = 0.5f, offset = 0.7f;
 	int count = 6;
 	for (int i = 0; i < count; ++i) {
 		float s, c;
 		Triangle t;
-		t.v[0].p = vec<4>(offset, offset, 0, 1);
+		t.v[0].p = vec<4>(offset, offset, 0.5f, 1);
 		s = sin(a + M_PI * 2 * i / count);
 		c = cos(a + M_PI * 2 * i / count);
-		t.v[1].p = vec<4>(offset + radius * s, offset + radius * c, 0, 1);
+		t.v[1].p = vec<4>(offset + radius * s, offset + radius * c, 0.5f, 1);
 		s = sin(a + M_PI * 2 * (i + 1) / count);
 		c = cos(a + M_PI * 2 * (i + 1) / count);
-		t.v[2].p = vec<4>(offset + radius * s, offset + radius * c, 0, 1);
+		t.v[2].p = vec<4>(offset + radius * s, offset + radius * c, 0.5f, 1);
 		mRenderer.drawTriangle(t);
 	}
 

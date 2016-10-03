@@ -1,5 +1,7 @@
 #pragma once
 
+#include "mathUtil.h"
+
 struct alignas(16) Vertex {
 	vec<4> p;
 	vec<3> n;
@@ -18,7 +20,13 @@ struct alignas(16) Vertex {
 
 struct alignas(16) Triangle {
 	Vertex v[3];
-
-
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 };
+
+template<>
+inline Vertex lerp(const Vertex & a, const Vertex & b, float t) {
+	Vertex v;
+	v.p = lerp(a.p, b.p, t);
+	v.n = lerp(a.n, b.n, t);
+	return v;
+}
