@@ -108,7 +108,7 @@ void Renderer::drawTriangle(const Triangle & t)
 				dstPoly[dstCount] = srcPoly[j];
 				++dstCount;
 			}
-			float denom = (srcPoly[j].p - srcPoly[(j + 1) % srcCount].p).dot(planeNormals[i]);
+			float denom = dot - srcPoly[(j + 1) % srcCount].p.dot(planeNormals[i]);
 			if (std::abs(denom) > EPSILON) {
 				float t = dot / denom;
 				// line segment connecting two verticies intersects the hyperplane
@@ -129,13 +129,13 @@ void Renderer::drawTriangle(const Triangle & t)
 	if(srcCount >= 3) {
 		for (int i = 0; i < srcCount; ++i) {
 			vec<4> & v = srcPoly[i].p;
-			// transform to screen coordinates
-			v = v.cwiseProduct(screenMul) + screenAdd;
 			float w = v.w();
 			// homogeneous division
 			v /= w;
 			// restore w
 			v.w() = w;
+			// transform to screen coordinates
+			v = v.cwiseProduct(screenMul) + screenAdd;
 		}
 		Triangle t;
 		t.v[0] = srcPoly[0];
@@ -164,8 +164,8 @@ void Renderer::rasterizeTriangle(const Triangle & t)
 
 	float invSlope0 = 0, invSlope1 = 0;
 
-	if (v1->y() - v0->y() > 0) invSlope0 = (v1->x() - v0->x()) / (v1->y() - v0->y());
-	if (v2->y() - v0->y() > 0) invSlope1 = (v2->x() - v0->x()) / (v2->y() - v0->y());
+	/*if (v1->y() - v0->y() > 0)*/ invSlope0 = (v1->x() - v0->x()) / (v1->y() - v0->y());
+	/*if (v2->y() - v0->y() > 0)*/ invSlope1 = (v2->x() - v0->x()) / (v2->y() - v0->y());
 
 	TriangleFillParams params;
 	params.yLow = v0->y();

@@ -68,7 +68,7 @@ void PreviewFrame::OnIdle(wxIdleEvent & event)
 	mRenderer.setRenderTarget(&mBuffer);
 	mRenderer.clearColor(0, 0, 0, 255);
 	
-	const float radius = 0.5f, offset = 0.7f;
+	const float radius = 1.2f, offset = 0.0f;
 	int count = 6;
 	for (int i = 0; i < count; ++i) {
 		float s, c;
