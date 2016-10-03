@@ -28,8 +28,12 @@ private:
 		vec<2> vRight;
 		vec<2> baryCoords[3];
 	};
-	void fillBottomHalfTri(const TriangleFillParams & t);
+	void rasterizeTriangle(const class Triangle & t);
+	void clipX(const class Triangle & t);
+	void clipY(const class Triangle & t);
+	void clipZ(const class Triangle & t);
 	void fillTopHalfTri(const TriangleFillParams & t);
+	void fillBottomHalfTri(const TriangleFillParams & t);
 };
 
 

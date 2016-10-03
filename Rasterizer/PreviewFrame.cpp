@@ -73,13 +73,13 @@ void PreviewFrame::OnIdle(wxIdleEvent & event)
 	for (int i = 0; i < count; ++i) {
 		float s, c;
 		Triangle t;
-		t.v[0] = vec<3>(offset, offset, 0);
+		t.v[0].p = vec<4>(offset, offset, 0, 1);
 		s = sin(a + M_PI * 2 * i / count);
 		c = cos(a + M_PI * 2 * i / count);
-		t.v[1] = vec<3>(offset + radius * s, offset + radius * c, 0);
+		t.v[1].p = vec<4>(offset + radius * s, offset + radius * c, 0, 1);
 		s = sin(a + M_PI * 2 * (i + 1) / count);
 		c = cos(a + M_PI * 2 * (i + 1) / count);
-		t.v[2] = vec<3>(offset + radius * s, offset + radius * c, 0);
+		t.v[2].p = vec<4>(offset + radius * s, offset + radius * c, 0, 1);
 		mRenderer.drawTriangle(t);
 	}
 

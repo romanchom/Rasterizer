@@ -67,6 +67,101 @@ T lerp(T a, T b, float t) {
 	return a * (1 - t) + b * t;
 }
 
+#define DRAWING_MODE 1
+
+void Renderer::drawTriangle(const Triangle & t)
+{
+	clipX(t);
+}
+
+
+void Renderer::rasterizeTriangle(const Triangle & t)
+{
+#if DRAWING_MODE == 1 // two triangles
+	uint32_t indicies[3] = { 0, 1, 2 };
+	vec<2> baryCoords[3] = { { 1, 0 },{ 0, 1 },{ 0, 0 } };
+
+	// order verticies by y coordinate
+	if (t.v[0].y() > t.v[2].y()) std::swap(indicies[0], indicies[2]);
+	if (t.v[indicies[0]].y() > t.v[indicies[1]].y()) std::swap(indicies[0], indicies[1]);
+	if (t.v[indicies[1]].y() > t.v[indicies[2]].y()) std::swap(indicies[1], indicies[2]);
+	const Vertex * v0 = t.v + indicies[0], *v1 = t.v + indicies[1], *v2 = t.v + indicies[2];
+
+	float invSlope0 = 0, invSlope1 = 0;
+
+	if (v1->y() - v0->y() > 0) invSlope0 = (v1->x() - v0->x()) / (v1->y() - v0->y());
+	if (v2->y() - v0->y() > 0) invSlope1 = (v2->x() - v0->x()) / (v2->y() - v0->y());
+
+	TriangleFillParams params;
+	params.yLow = v0->y();
+	params.yHigh = v1->y();
+	params.x0 = v0->x();
+	params.vLeft = v1->p.head<2>();
+	params.vRight = v2->p.head<2>();
+	for (int i = 0; i < 3; ++i) {
+		params.baryCoords[i] = baryCoords[indicies[i]];
+	}
+	if (invSlope0 > invSlope1) {
+		std::swap(params.vLeft, params.vRight);
+		std::swap(params.baryCoords[1], params.baryCoords[2]);
+	}
+
+	fillBottomHalfTri(params);
+
+	params.yLow = params.yHigh;
+	params.yHigh = v2->y();
+	params.x0 = v2->x();
+	params.vLeft = v1->p.head<2>();
+	params.vRight = v0->p.head<2>();
+	/*for (int i = 0; i < 3; ++i) {
+	params.baryCoords[i] = baryCoords[indicies[2 - i]];
+	}*/
+	params.baryCoords[0] = baryCoords[indicies[2]];
+	params.baryCoords[1] = baryCoords[indicies[1]];
+	params.baryCoords[2] = baryCoords[indicies[0]];
+	if (invSlope0 > invSlope1) {
+		std::swap(params.vLeft, params.vRight);
+		std::swap(params.baryCoords[1], params.baryCoords[2]);
+	}
+
+	fillTopHalfTri(params);
+
+
+#else // half-space
+#define V0 t.v[0]
+#define V1 t.v[1]
+#define V2 t.v[2]
+	float xd0 = V1.x() - V0.x();
+	float xd1 = V2.x() - V1.x();
+	float xd2 = V0.x() - V2.x();
+
+	float yd0 = V1.y() - V0.y();
+	float yd1 = V2.y() - V1.y();
+	float yd2 = V0.y() - V2.y();
+
+	auto xminmax = std::minmax({ V0.x(), V1.x(), V2.x() });
+	auto yminmax = std::minmax({ V0.y(), V1.y(), V2.y() });
+
+	int xmin = xminmax.first;
+	int xmax = xminmax.second;
+
+	for (int y = yminmax.first, ymax = yminmax.second; y < ymax; ++y) {
+		for (int x = xmin; x < xmax; ++x) {
+			if ((((y - V0.y()) * xd0 - (x - V0.x()) * yd0) < 0) &&
+				(((y - V1.y()) * xd1 - (x - V1.x()) * yd1) < 0) &&
+				(((y - V2.y()) * xd2 - (x - V2.x()) * yd2) < 0)) {
+				mRenderTarget->color(x, y) += 100;
+			}
+		}
+	}
+#endif
+}
+
+void Renderer::clipX(const Triangle & t)
+{
+	rasterizeTriangle(t);
+}
+
 void Renderer::fillBottomHalfTri(const TriangleFillParams & t) {
 	float denom0 = 1.0f / (t.vLeft.y() - t.yLow);
 	float denom1 = 1.0f / (t.vRight.y() - t.yLow);
@@ -119,91 +214,4 @@ void Renderer::fillTopHalfTri(const TriangleFillParams & t) {
 			mRenderTarget->color(x, y) = r + (g << 8) + (b << 16);
 		}
 	}
-}
-
-
-#define DRAWING_MODE 1
-
-void Renderer::drawTriangle(const Triangle & t)
-{
-#if DRAWING_MODE == 1 // two triangles
-#define V0 t.v[indicies[0]]
-#define V1 t.v[indicies[1]]
-#define V2 t.v[indicies[2]]
-	uint32_t indicies[] = { 0, 1, 2 };
-	vec<2> baryCoords[3] = { {1, 0}, {0, 1}, {0, 0} };
-
-	// order verticies by y coordinate
-	if (V0.y() > V2.y()) std::swap(indicies[0], indicies[2]);
-	if (V0.y() > V1.y()) std::swap(indicies[0], indicies[1]);
-	if (V1.y() > V2.y()) std::swap(indicies[1], indicies[2]);
-
-	float invSlope0 = 0, invSlope1 = 0;
-
-	if (V1.y() - V0.y() > 0) invSlope0 = (V1.x() - V0.x()) / (V1.y() - V0.y());
-	if (V2.y() - V0.y() > 0) invSlope1 = (V2.x() - V0.x()) / (V2.y() - V0.y());
-
-	TriangleFillParams params;
-	params.yLow = V0.y();
-	params.yHigh = V1.y();
-	params.x0 = V0.x();
-	params.vLeft = V1.head<2>();
-	params.vRight = V2.head<2>();
-	for (int i = 0; i < 3; ++i) {
-		params.baryCoords[i] = baryCoords[indicies[i]];
-	}
-	if (invSlope0 > invSlope1) {
-		std::swap(params.vLeft, params.vRight);
-		std::swap(params.baryCoords[1], params.baryCoords[2]);
-	}
-
-	fillBottomHalfTri(params);
-
-	params.yLow = params.yHigh;
-	params.yHigh = V2.y();
-	params.x0 = V2.x();
-	params.vLeft = V1.head<2>();
-	params.vRight = V0.head<2>();
-	/*for (int i = 0; i < 3; ++i) {
-		params.baryCoords[i] = baryCoords[indicies[2 - i]];
-	}*/
-	params.baryCoords[0] = baryCoords[indicies[2]];
-	params.baryCoords[1] = baryCoords[indicies[1]];
-	params.baryCoords[2] = baryCoords[indicies[0]];
-	if (invSlope0 > invSlope1) {
-		std::swap(params.vLeft, params.vRight);
-		std::swap(params.baryCoords[1], params.baryCoords[2]);
-	}
-	
-	fillTopHalfTri(params);
-
-
-#else // half-space
-#define V0 t.v[0]
-#define V1 t.v[1]
-#define V2 t.v[2]
-	float xd0 = V1.x() - V0.x();
-	float xd1 = V2.x() - V1.x();
-	float xd2 = V0.x() - V2.x();
-
-	float yd0 = V1.y() - V0.y();
-	float yd1 = V2.y() - V1.y();
-	float yd2 = V0.y() - V2.y();
-
-	auto xminmax = std::minmax({V0.x(), V1.x(), V2.x()});
-	auto yminmax = std::minmax({V0.y(), V1.y(), V2.y()});
-
-	int xmin = xminmax.first;
-	int xmax = xminmax.second;
-
-	for (int y = yminmax.first, ymax = yminmax.second; y < ymax; ++y) {
-		for (int x = xmin; x < xmax; ++x) {
-			if ((((y - V0.y()) * xd0 - (x - V0.x()) * yd0) < 0) &&
-				(((y - V1.y()) * xd1 - (x - V1.x()) * yd1) < 0) &&
-				(((y - V2.y()) * xd2 - (x - V2.x()) * yd2) < 0)) {
-				mRenderTarget->color(x, y) += 100;
-			}
-		}
-	}
-#endif
 }
