@@ -46,7 +46,7 @@ PreviewFrame::PreviewFrame(const wxString & title, const wxPoint & pos, const wx
 	SetStatusText("Welcome to wxWidgets!");
 
 	texture.setAddressing(REPEAT);
-	texture.setSampling(LINEAR);
+	texture.setSampling(NEAREST);
 }
 
 void PreviewFrame::OnExit(wxCommandEvent & event)
@@ -80,7 +80,7 @@ void PreviewFrame::OnIdle(wxIdleEvent & event)
 	mat4 perspective;
 	perspective <<
 		1, 0, 0, 0,
-		0, 1, 0, 0,
+		0, -1, 0, 0,
 		0, 0, n / (f - n), n * f / (f - n),
 		0, 0, 1, 0;
 

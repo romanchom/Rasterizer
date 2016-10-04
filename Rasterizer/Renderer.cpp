@@ -107,6 +107,18 @@ void Renderer::drawMesh(const Mesh & mesh)
 
 void Renderer::drawTriangle(const Vertex ** verticies)
 {
+	// early backface culling
+	{
+		vec<4> temp[3];
+		for (int i = 0; i < 3; ++i) {
+			temp[i] = verticies[i]->p / verticies[i]->p.w();
+		}
+		vec<4> ab = temp[1] - temp[0];
+		vec<4> ac = temp[2] - temp[0];
+		vec<4> cross = ab.cross3(ac);
+		if (cross.z() <= 0) return;
+	}
+
 	static const int MAX_VERTS = 9;
 	static const float EPSILON = 1.0E-20;
 	Vertex buff0[MAX_VERTS], buff1[MAX_VERTS];
@@ -162,6 +174,8 @@ void Renderer::drawTriangle(const Vertex ** verticies)
 			float w = v.w();
 			// homogeneous division
 			v /= w;
+			// divide attributes by w as well to interpolate them correctly wrt perspective
+			srcPoly[i].uv /= w;
 			// restore w
 			v.w() = w;
 			// transform to screen coordinates
@@ -313,11 +327,15 @@ inline void Renderer::scanline(const TriangleFillParams & t)
 		baryCoords[2] = 1.0f - baryCoords[0] - baryCoords[1];
 
 		vec<4> interPos = t.v[0].p * baryCoords[0] + t.v[1].p * baryCoords[1] + t.v[2].p * baryCoords[2];
-		vec<2> uv = t.v[0].uv * baryCoords[0] + t.v[1].uv * baryCoords[1] + t.v[2].uv * baryCoords[2];
-
+		
 		float depth = interPos.z();
 		if (mRenderTarget->depth(x, t.currentY) > depth) continue;
 		mRenderTarget->depth(x, t.currentY) = depth;
+
+		float w = interPos.w();
+		interPos *= w;
+		vec<2> uv = t.v[0].uv * baryCoords[0] + t.v[1].uv * baryCoords[1] + t.v[2].uv * baryCoords[2];
+		uv *= w;
 
 		mRenderTarget->color(x, t.currentY) = vecToColor(mTexture->sample(uv));
 	}
