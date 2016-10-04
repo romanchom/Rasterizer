@@ -4,6 +4,7 @@
 #include "Buffer.h"
 #include "Renderer.h"
 #include "Mesh.h"
+#include "Texture.h"
 
 enum {
 	ID_SAVESCREEN = 1,
@@ -15,6 +16,7 @@ private:
 	Buffer mBuffer;
 	Renderer mRenderer;
 	Mesh cyllinder;
+	Texture texture;
 
 	void OnExit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);

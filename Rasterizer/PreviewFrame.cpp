@@ -19,7 +19,8 @@ wxEND_EVENT_TABLE()
 PreviewFrame::PreviewFrame(const wxString & title, const wxPoint & pos, const wxSize & size) :
 	wxFrame(NULL, wxID_ANY, title, pos, size),
 	mBuffer(512, 512),
-	cyllinder("cyllinder.obj")
+	cyllinder("asteroid.obj"),
+	texture("texture.png")
 {
 	wxMenu *menuFile = new wxMenu;
 	menuFile->Append(wxID_EXIT);
@@ -81,7 +82,7 @@ void PreviewFrame::OnIdle(wxIdleEvent & event)
 		0, 0, 1, 0;
 
 	mat4 translation = mat4::Identity();
-	translation.col(3) << 0, 0, 50, 1;
+	translation.col(3) << 0, 0, 10, 1;
 
 	Eigen::Quaternionf q;
 	q = Eigen::AngleAxisf(a, vec<3>::UnitY());
@@ -91,6 +92,7 @@ void PreviewFrame::OnIdle(wxIdleEvent & event)
 
 	mRenderer.setTransformMatrix(trans);
 
+	mRenderer.setTexture(&texture);
 	mRenderer.drawMesh(cyllinder);
 
 

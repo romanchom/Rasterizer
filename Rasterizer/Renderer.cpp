@@ -2,6 +2,7 @@
 #include "Renderer.h"
 
 #include "Buffer.h"
+#include "Texture.h"
 
 #include "Triangle.h"
 
@@ -76,6 +77,11 @@ void Renderer::setTransformMatrix(const mat4 & matrix)
 	mTransform = matrix;
 }
 
+void Renderer::setTexture(Texture * texture)
+{
+	mTexture = texture;
+}
+
 #define DRAWING_MODE 1
 
 
@@ -87,7 +93,7 @@ void Renderer::drawMesh(const Mesh & mesh)
 
 	for (int i = 0; i < mesh.verticies.size(); ++i) {
 		mVertexCache[i].p = mTransform * mesh.verticies[i].p;
-		//mVertexCache[i].n = mTransform * mesh.verticies[i].n;
+		mVertexCache[i].uv = mesh.verticies[i].uv;
 	}
 
 	const Vertex * verticies[3];
@@ -307,11 +313,12 @@ inline void Renderer::scanline(const TriangleFillParams & t)
 		baryCoords[2] = 1.0f - baryCoords[0] - baryCoords[1];
 
 		vec<4> interPos = t.v[0].p * baryCoords[0] + t.v[1].p * baryCoords[1] + t.v[2].p * baryCoords[2];
+		vec<2> uv = t.v[0].uv * baryCoords[0] + t.v[1].uv * baryCoords[1] + t.v[2].uv * baryCoords[2];
 
 		float depth = interPos.z();
 		if (mRenderTarget->depth(x, t.currentY) > depth) continue;
 		mRenderTarget->depth(x, t.currentY) = depth;
 
-		mRenderTarget->color(x, t.currentY) = int(interPos.w()) * (1 + (1 << 8) + (1 << 16));// *255.0f / 200.0f;
+		mRenderTarget->color(x, t.currentY) = vecToColor(mTexture->sample(uv));
 	}
 }

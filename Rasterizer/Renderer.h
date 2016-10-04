@@ -9,6 +9,7 @@ class alignas(16) Renderer
 private:
 	wxImage mImage;
 	class Buffer * mRenderTarget;
+	class Texture * mTexture;
 	vec<4> screenAdd;
 	vec<4> screenMul;
 	std::vector<Vertex> mVertexCache;
@@ -24,6 +25,7 @@ public:
 	void clearColor(uint32_t color);
 	void clearDepth(float depth);
 	void setTransformMatrix(const mat4 & matrix);
+	void setTexture(class Texture * texture);
 	void drawMesh(const Mesh & mesh);
 	void drawTriangle(const Vertex ** verticies);
 private:
