@@ -25,3 +25,8 @@ inline vec<4> colorToVec(uint32_t c) {
 	}
 	return ret;
 }
+
+inline float modDown(float x, float denom)
+{
+	return x - denom * floor(x / denom);
+}

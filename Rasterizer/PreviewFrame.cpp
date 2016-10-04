@@ -44,6 +44,9 @@ PreviewFrame::PreviewFrame(const wxString & title, const wxPoint & pos, const wx
 	verticalSizer->Add(imagePanel, 1, wxEXPAND | wxALL, 5);
 
 	SetStatusText("Welcome to wxWidgets!");
+
+	texture.setAddressing(REPEAT);
+	texture.setSampling(LINEAR);
 }
 
 void PreviewFrame::OnExit(wxCommandEvent & event)
