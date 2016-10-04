@@ -194,33 +194,22 @@ void Renderer::rasterizeTriangle(const Triangle & t)
 	TriangleFillParams params;
 	params.yLow = v0->y();
 	params.yHigh = v1->y();
-	params.x0 = v0->x();
-	params.vLeft = v1->p.head<2>();
-	params.vRight = v2->p.head<2>();
 	params.v[0] = *v0;
 	params.v[1] = *v1;
 	params.v[2] = *v2;
-	for (int i = 0; i < 3; ++i) {
-		params.baryCoords[i] = baryCoords[i];
-	}
 	if (invSlope0 > invSlope1) {
-		std::swap(params.vLeft, params.vRight);
-		std::swap(params.baryCoords[1], params.baryCoords[2]);
+		std::swap(params.v[1], params.v[2]);
 	}
 
 	fillBottomHalfTri(params);
 
 	params.yLow = params.yHigh;
 	params.yHigh = v2->y();
-	params.x0 = v2->x();
-	params.vLeft = v1->p.head<2>();
-	params.vRight = v0->p.head<2>();
-	params.baryCoords[0] = baryCoords[2];
-	params.baryCoords[1] = baryCoords[1];
-	params.baryCoords[2] = baryCoords[0];
+	params.v[0] = *v2;
+	params.v[1] = *v1;
+	params.v[2] = *v0;
 	if (invSlope0 > invSlope1) {
-		std::swap(params.vLeft, params.vRight);
-		std::swap(params.baryCoords[1], params.baryCoords[2]);
+		std::swap(params.v[1], params.v[2]);
 	}
 
 	fillTopHalfTri(params);
@@ -257,11 +246,12 @@ void Renderer::rasterizeTriangle(const Triangle & t)
 }
 
 
-void Renderer::fillBottomHalfTri(const TriangleFillParams & t) {
-	float denom0 = t.vLeft.y() - t.yLow;
-	float denom1 = t.vRight.y() - t.yLow;
+inline void Renderer::fillBottomHalfTri(TriangleFillParams & t) {
+	float denom0 = t.v[1].y() - t.yLow;
+	float denom1 = t.v[2].y() - t.yLow;
 	if (denom0 != 0.0) denom0 = 1.0f / denom0;
 	if (denom1 != 0.0) denom1 = 1.0f / denom1;
+	const vec<2> baryConst[3] = { { 1, 0 },{ 0, 1 },{ 0, 0 } };
 
 	int yBegin = floor(t.yLow), yEnd = ceil(t.yHigh);
 
@@ -270,59 +260,58 @@ void Renderer::fillBottomHalfTri(const TriangleFillParams & t) {
 		float t1 = (y - t.yLow) * denom1;
 		float t0 = (y - t.yLow) * denom0;
 
-		int sx = (int)lerp(t.x0, t.vLeft.x(), t0);
-		int ex = (int)lerp(t.x0, t.vRight.x(), t1);
-		vec<2> bcL = lerp(t.baryCoords[0], t.baryCoords[1], t0);
-		vec<2> bcR = lerp(t.baryCoords[0], t.baryCoords[2], t1);
+		t.xBegin = (int)lerp(t.v[0].x(), t.v[1].x(), t0);
+		t.xEnd = (int)lerp(t.v[0].x(), t.v[2].x(), t1);
+		t.bcL = lerp(baryConst[0], baryConst[1], t0);
+		t.bcR = lerp(baryConst[0], baryConst[2], t1);
 
-		for (int x = sx; x < ex; x++)
-		{
-			vec<3> baryCoords;
-			baryCoords.topRows<2>() = lerp(bcL, bcR, (x - sx) / float(ex - sx));
-			baryCoords[2] = 1.0f - baryCoords[0] - baryCoords[1];
+		t.currentY = y;
 
-			vec<4> interPos = t.v[0].p * baryCoords[0] + t.v[1].p * baryCoords[1] + t.v[2].p * baryCoords[2];
-
-			float depth = interPos.z();
-			if (mRenderTarget->depth(x, y) > depth) continue;
-			mRenderTarget->depth(x, y) = depth;
-
-			mRenderTarget->color(x, y) = interPos.w() * 255.0f / 200.0f;
-		}
+		scanline(t);
 	}
 }
 
-void Renderer::fillTopHalfTri(const TriangleFillParams & t) {
-	float denom0 = t.yHigh - t.vLeft.y();
-	float denom1 = t.yHigh - t.vRight.y();
+inline void Renderer::fillTopHalfTri(TriangleFillParams & t) {
+	float denom0 = t.yHigh - t.v[1].y();
+	float denom1 = t.yHigh - t.v[2].y();
 	if (denom0 != 0.0) denom0 = 1.0f / denom0;
 	if (denom1 != 0.0) denom1 = 1.0f / denom1;
+	const vec<2> baryConst[3] = { { 1, 0 },{ 0, 1 },{ 0, 0 } };
 
 	int yBegin = ceil(t.yLow), yEnd = floor(t.yHigh);
 
 	for (int y = yBegin; y <= yEnd; y++)
 	{
-		float t0 = (y - t.vLeft.y()) * denom0;
-		float t1 = (y - t.vRight.y()) * denom1;
+		float t0 = (y - t.v[1].y()) * denom0;
+		float t1 = (y - t.v[2].y()) * denom1;
 
-		int sx = (int)lerp(t.vLeft.x(), t.x0, t0);
-		int ex = (int)lerp(t.vRight.x(), t.x0, t1);
-		vec<2> bcL = lerp(t.baryCoords[1], t.baryCoords[0], t0);
-		vec<2> bcR = lerp(t.baryCoords[2], t.baryCoords[0], t1);
+		t.xBegin = (int)lerp(t.v[1].x(), t.v[0].x(), t0);
+		t.xEnd = (int)lerp(t.v[2].x(), t.v[0].x(), t1);
+		t.bcL = lerp(baryConst[1], baryConst[0], t0);
+		t.bcR = lerp(baryConst[2], baryConst[0], t1);
 
-		for (int x = sx; x < ex; x++)
-		{
-			vec<3> baryCoords;
-			baryCoords.topRows<2>() = lerp(bcL, bcR, (x - sx) / float(ex - sx));
-			baryCoords[2] = 1.0f - baryCoords[0] - baryCoords[1];
+		t.currentY = y;
 
-			vec<4> interPos = t.v[0].p * baryCoords[0] + t.v[1].p * baryCoords[1] + t.v[2].p * baryCoords[2];
+		scanline(t);
+	}
+}
 
-			float depth = interPos.z();
-			if (mRenderTarget->depth(x, y) > depth) continue;
-			mRenderTarget->depth(x, y) = depth;
+inline void Renderer::scanline(const TriangleFillParams & t)
+{
+	float lerpMul = 1.0f / static_cast<float>(t.xEnd - t.xBegin);
 
-			mRenderTarget->color(x, y) = interPos.w() * 255.0f / 200.0f;
-		}
+	for (int x = t.xBegin; x < t.xEnd; x++)
+	{
+		vec<3> baryCoords;
+		baryCoords.topRows<2>() = lerp(t.bcL, t.bcR, (x - t.xBegin) * lerpMul);
+		baryCoords[2] = 1.0f - baryCoords[0] - baryCoords[1];
+
+		vec<4> interPos = t.v[0].p * baryCoords[0] + t.v[1].p * baryCoords[1] + t.v[2].p * baryCoords[2];
+
+		float depth = interPos.z();
+		if (mRenderTarget->depth(x, t.currentY) > depth) continue;
+		mRenderTarget->depth(x, t.currentY) = depth;
+
+		mRenderTarget->color(x, t.currentY) = int(interPos.w()) * (1 + (1 << 8) + (1 << 16));// *255.0f / 200.0f;
 	}
 }

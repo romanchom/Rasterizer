@@ -30,16 +30,17 @@ private:
 	struct TriangleFillParams {
 		float yLow;
 		float yHigh;
-		float x0;
-		vec<2> vLeft;
-		vec<2> vRight;
-		vec<2> baryCoords[3];
 		Vertex v[3];
+		int currentY;
+		int xBegin;
+		int xEnd;
+		vec<2> bcL;
+		vec<2> bcR;
 	};
 	void rasterizeTriangle(const struct Triangle & t);
-	void fillTopHalfTri(const TriangleFillParams & t);
-	void fillBottomHalfTri(const TriangleFillParams & t);
-	void scanline();
+	void fillTopHalfTri(TriangleFillParams & t);
+	void fillBottomHalfTri(TriangleFillParams & t);
+	void scanline(const TriangleFillParams & t);
 
 };
 
