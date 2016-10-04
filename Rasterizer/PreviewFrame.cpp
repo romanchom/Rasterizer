@@ -5,7 +5,7 @@
 #include <sstream>
 
 #include "ImagePanel.h"
-#include "Triangle.h"
+#include "Scene.h"
 
 
 wxBEGIN_EVENT_TABLE(PreviewFrame, wxFrame)
@@ -18,9 +18,7 @@ wxEND_EVENT_TABLE()
 
 PreviewFrame::PreviewFrame(const wxString & title, const wxPoint & pos, const wxSize & size) :
 	wxFrame(NULL, wxID_ANY, title, pos, size),
-	mBuffer(512, 512),
-	cyllinder("asteroid.obj"),
-	texture("texture.png")
+	mScene(nullptr)
 {
 	wxMenu *menuFile = new wxMenu;
 	menuFile->Append(wxID_EXIT);
@@ -45,8 +43,6 @@ PreviewFrame::PreviewFrame(const wxString & title, const wxPoint & pos, const wx
 
 	SetStatusText("Welcome to wxWidgets!");
 
-	texture.setAddressing(REPEAT);
-	texture.setSampling(NEAREST);
 }
 
 void PreviewFrame::OnExit(wxCommandEvent & event)
@@ -68,40 +64,10 @@ std::chrono::high_resolution_clock::time_point lastFrame;
 
 void PreviewFrame::OnIdle(wxIdleEvent & event)
 {
-	static float a = 0.0f;
-	a += 0.002f;
-	mRenderer.setRenderTarget(&mBuffer);
-	mRenderer.clearColor(0, 0, 0, 255);
-	mRenderer.clearDepth(0);
-	
-
-	float f = 200.0f;
-	float n = 0.01f;
-	mat4 perspective;
-	perspective <<
-		1, 0, 0, 0,
-		0, -1, 0, 0,
-		0, 0, n / (f - n), n * f / (f - n),
-		0, 0, 1, 0;
-
-	mat4 translation = mat4::Identity();
-	translation.col(3) << 0, 0, 10, 1;
-
-	Eigen::Quaternionf q;
-	q = Eigen::AngleAxisf(a, vec<3>::UnitY());
-	mat4 rot = mat4::Identity();
-	rot.topLeftCorner<3, 3>() = q.toRotationMatrix();
-	mat4 trans = perspective * translation * rot;
-
-	mRenderer.setTransformMatrix(trans);
-
-	mRenderer.setTexture(&texture);
-	mRenderer.drawMesh(cyllinder);
-
-
-
-	mRenderer.present(imagePanel);
-
+	if (mScene != nullptr) {
+		mScene->draw(mRenderer);
+		mRenderer.present(imagePanel);
+	}
 	wxPaintEvent unused;
 	OnPaint(unused);
 	event.RequestMore();

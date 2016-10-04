@@ -29,5 +29,6 @@ inline Vertex lerp(const Vertex & a, const Vertex & b, float t) {
 	Vertex v;
 	v.p = lerp(a.p, b.p, t);
 	v.n = lerp(a.n, b.n, t);
+	v.uv = lerp(a.uv, b.uv, t);
 	return v;
 }

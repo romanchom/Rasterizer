@@ -69,14 +69,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Addresser.cpp" />
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="ImagePanel.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="PreviewFrame.cpp" />
     <ClCompile Include="Renderer.cpp" />
-    <ClCompile Include="Sampler.cpp" />
+    <ClCompile Include="SampleScene.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -84,7 +83,6 @@
     <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Addresser.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="ImagePanel.h" />
     <ClInclude Include="Main.h" />
@@ -92,7 +90,8 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="PreviewFrame.h" />
     <ClInclude Include="Renderer.h" />
-    <ClInclude Include="Sampler.h" />
+    <ClInclude Include="SampleScene.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Triangle.h" />

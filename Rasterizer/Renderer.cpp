@@ -72,14 +72,15 @@ void Renderer::clearDepth(float depth)
 	}
 }
 
-void Renderer::setTransformMatrix(const mat4 & matrix)
-{
-	mTransform = matrix;
-}
-
 void Renderer::setTexture(Texture * texture)
 {
 	mTexture = texture;
+}
+
+void Renderer::setLightDir(const vec<3>& dir)
+{
+	mLightDir = dir;
+	mLightDir.normalize();
 }
 
 #define DRAWING_MODE 1
@@ -91,9 +92,14 @@ void Renderer::drawMesh(const Mesh & mesh)
 		mVertexCache.resize(mesh.verticies.size());
 	}
 
+	mat4 mvp = mProjection * mView * mModel;
+
 	for (int i = 0; i < mesh.verticies.size(); ++i) {
-		mVertexCache[i].p = mTransform * mesh.verticies[i].p;
+		mVertexCache[i].p = mvp * mesh.verticies[i].p;
 		mVertexCache[i].uv = mesh.verticies[i].uv;
+		vec<4> n; 
+		n << mesh.verticies[i].n, 0.0f;
+		mVertexCache[i].n = (mModel * n).head<3>();
 	}
 
 	const Vertex * verticies[3];
@@ -115,8 +121,8 @@ void Renderer::drawTriangle(const Vertex ** verticies)
 		}
 		vec<4> ab = temp[1] - temp[0];
 		vec<4> ac = temp[2] - temp[0];
-		vec<4> cross = ab.cross3(ac);
-		if (cross.z() <= 0) return;
+		float crossZ = ab[0] * ac[1] - ab[1] * ac[0];
+		if (crossZ <= 0) return;
 	}
 
 	static const int MAX_VERTS = 9;
@@ -176,6 +182,7 @@ void Renderer::drawTriangle(const Vertex ** verticies)
 			v /= w;
 			// divide attributes by w as well to interpolate them correctly wrt perspective
 			srcPoly[i].uv /= w;
+			srcPoly[i].n /= w;
 			// restore w
 			v.w() = w;
 			// transform to screen coordinates
@@ -336,7 +343,11 @@ inline void Renderer::scanline(const TriangleFillParams & t)
 		interPos *= w;
 		vec<2> uv = t.v[0].uv * baryCoords[0] + t.v[1].uv * baryCoords[1] + t.v[2].uv * baryCoords[2];
 		uv *= w;
+		vec<3> n = t.v[0].n * baryCoords[0] + t.v[1].n * baryCoords[1] + t.v[2].n * baryCoords[2];
+		n *= w;
 
-		mRenderTarget->color(x, t.currentY) = vecToColor(mTexture->sample(uv));
+		float light = std::max(0.0f, mLightDir.dot(n));
+
+		mRenderTarget->color(x, t.currentY) = vecToColor(mTexture->sample(uv) * light);
 	}
 }

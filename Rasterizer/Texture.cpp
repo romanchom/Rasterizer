@@ -37,6 +37,7 @@ vec<4> Texture::sample(const vec<2>& uv)
 {
 	vec<2> pixelCoords = uv;
 	pixelCoords = pixelCoords.cwiseProduct(mSize);
+	//pixelCoords.y() = mSize.y() - pixelCoords.y();
 
 	if (mSampling == NEAREST) {
 		return colorToVec(readSample(pixelCoords));

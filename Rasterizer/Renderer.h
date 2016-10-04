@@ -13,7 +13,10 @@ private:
 	vec<4> screenAdd;
 	vec<4> screenMul;
 	std::vector<Vertex> mVertexCache;
-	mat4 mTransform;
+	mat4 mModel;
+	mat4 mView;
+	mat4 mProjection;
+	vec<3> mLightDir;
 public:
 	Renderer();
 	void saveToFile(const std::string & fileName);
@@ -24,8 +27,11 @@ public:
 	void clearColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	void clearColor(uint32_t color);
 	void clearDepth(float depth);
-	void setTransformMatrix(const mat4 & matrix);
+	void setModel(const mat4 & m) { mModel = m; }
+	void setView(const mat4 & m) { mView = m; }
+	void setProjection(const mat4 & m) { mProjection = m; }
 	void setTexture(class Texture * texture);
+	void setLightDir(const vec<3> & dir);
 	void drawMesh(const Mesh & mesh);
 	void drawTriangle(const Vertex ** verticies);
 private:
