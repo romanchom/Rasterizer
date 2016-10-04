@@ -18,7 +18,8 @@ wxEND_EVENT_TABLE()
 
 PreviewFrame::PreviewFrame(const wxString & title, const wxPoint & pos, const wxSize & size) :
 	wxFrame(NULL, wxID_ANY, title, pos, size),
-	mBuffer(512, 512)
+	mBuffer(512, 512),
+	cyllinder("cyllinder.obj")
 {
 	wxMenu *menuFile = new wxMenu;
 	menuFile->Append(wxID_EXIT);
@@ -67,21 +68,32 @@ void PreviewFrame::OnIdle(wxIdleEvent & event)
 	a += 0.002f;
 	mRenderer.setRenderTarget(&mBuffer);
 	mRenderer.clearColor(0, 0, 0, 255);
+	mRenderer.clearDepth(0);
 	
-	const float radius = 1.2f, offset = 0.0f;
-	int count = 6;
-	for (int i = 0; i < count; ++i) {
-		float s, c;
-		Triangle t;
-		t.v[0].p = vec<4>(offset, offset, 0.5f, 1);
-		s = sin(a + M_PI * 2 * i / count);
-		c = cos(a + M_PI * 2 * i / count);
-		t.v[1].p = vec<4>(offset + radius * s, offset + radius * c, 0.5f, 1);
-		s = sin(a + M_PI * 2 * (i + 1) / count);
-		c = cos(a + M_PI * 2 * (i + 1) / count);
-		t.v[2].p = vec<4>(offset + radius * s, offset + radius * c, 0.5f, 1);
-		mRenderer.drawTriangle(t);
-	}
+
+	float f = 200.0f;
+	float n = 0.01f;
+	mat4 perspective;
+	perspective <<
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, n / (f - n), n * f / (f - n),
+		0, 0, 1, 0;
+
+	mat4 translation = mat4::Identity();
+	translation.col(3) << 0, 0, 50, 1;
+
+	Eigen::Quaternionf q;
+	q = Eigen::AngleAxisf(a, vec<3>::UnitY());
+	mat4 rot = mat4::Identity();
+	rot.topLeftCorner<3, 3>() = q.toRotationMatrix();
+	mat4 trans = perspective * translation * rot;
+
+	mRenderer.setTransformMatrix(trans);
+
+	mRenderer.drawMesh(cyllinder);
+
+
 
 	mRenderer.present(imagePanel);
 

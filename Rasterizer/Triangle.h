@@ -6,6 +6,7 @@ struct alignas(16) Vertex {
 	vec<4> p;
 	vec<3> n;
 	uint32_t c;
+	vec<2> uv;
 
 	float & x() { return p.x(); }
 	float & y() { return p.y(); }

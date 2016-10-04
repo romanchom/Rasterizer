@@ -71,11 +71,35 @@ void Renderer::clearDepth(float depth)
 	}
 }
 
+void Renderer::setTransformMatrix(const mat4 & matrix)
+{
+	mTransform = matrix;
+}
 
 #define DRAWING_MODE 1
 
 
-void Renderer::drawTriangle(const Triangle & t)
+void Renderer::drawMesh(const Mesh & mesh)
+{
+	if (mVertexCache.size() < mesh.verticies.size()) {
+		mVertexCache.resize(mesh.verticies.size());
+	}
+
+	for (int i = 0; i < mesh.verticies.size(); ++i) {
+		mVertexCache[i].p = mTransform * mesh.verticies[i].p;
+		//mVertexCache[i].n = mTransform * mesh.verticies[i].n;
+	}
+
+	const Vertex * verticies[3];
+	for (int i = 0; i < mesh.indicies.size(); i += 3) {
+		for (int j = 0; j < 3; ++j) {
+			verticies[j] = &mVertexCache[mesh.indicies[i + j]];
+		}
+		drawTriangle(verticies);
+	}
+}
+
+void Renderer::drawTriangle(const Vertex ** verticies)
 {
 	static const int MAX_VERTS = 9;
 	static const float EPSILON = 1.0E-20;
@@ -86,7 +110,7 @@ void Renderer::drawTriangle(const Triangle & t)
 	uint32_t dstCount = 0;
 
 	for (int i = 0; i < 3; ++i) {
-		srcPoly[i] = t.v[i];
+		srcPoly[i] = *verticies[i];
 	}
 
 	vec<4> planeNormals[6] = {
@@ -173,8 +197,11 @@ void Renderer::rasterizeTriangle(const Triangle & t)
 	params.x0 = v0->x();
 	params.vLeft = v1->p.head<2>();
 	params.vRight = v2->p.head<2>();
+	params.v[0] = *v0;
+	params.v[1] = *v1;
+	params.v[2] = *v2;
 	for (int i = 0; i < 3; ++i) {
-		params.baryCoords[i] = baryCoords[indicies[i]];
+		params.baryCoords[i] = baryCoords[i];
 	}
 	if (invSlope0 > invSlope1) {
 		std::swap(params.vLeft, params.vRight);
@@ -188,9 +215,9 @@ void Renderer::rasterizeTriangle(const Triangle & t)
 	params.x0 = v2->x();
 	params.vLeft = v1->p.head<2>();
 	params.vRight = v0->p.head<2>();
-	params.baryCoords[0] = baryCoords[indicies[2]];
-	params.baryCoords[1] = baryCoords[indicies[1]];
-	params.baryCoords[2] = baryCoords[indicies[0]];
+	params.baryCoords[0] = baryCoords[2];
+	params.baryCoords[1] = baryCoords[1];
+	params.baryCoords[2] = baryCoords[0];
 	if (invSlope0 > invSlope1) {
 		std::swap(params.vLeft, params.vRight);
 		std::swap(params.baryCoords[1], params.baryCoords[2]);
@@ -250,11 +277,17 @@ void Renderer::fillBottomHalfTri(const TriangleFillParams & t) {
 
 		for (int x = sx; x < ex; x++)
 		{
-			vec<2> baryCoords = lerp(bcL, bcR, (x - sx) / float(ex - sx));
-			int r = 255 * baryCoords.x();
-			int g = 255 * baryCoords.y();
-			int b = (255 - r - g);
-			mRenderTarget->color(x, y) = r + (g << 8) + (b << 16);
+			vec<3> baryCoords;
+			baryCoords.topRows<2>() = lerp(bcL, bcR, (x - sx) / float(ex - sx));
+			baryCoords[2] = 1.0f - baryCoords[0] - baryCoords[1];
+
+			vec<4> interPos = t.v[0].p * baryCoords[0] + t.v[1].p * baryCoords[1] + t.v[2].p * baryCoords[2];
+
+			float depth = interPos.z();
+			if (mRenderTarget->depth(x, y) > depth) continue;
+			mRenderTarget->depth(x, y) = depth;
+
+			mRenderTarget->color(x, y) = interPos.w() * 255.0f / 200.0f;
 		}
 	}
 }
@@ -279,11 +312,17 @@ void Renderer::fillTopHalfTri(const TriangleFillParams & t) {
 
 		for (int x = sx; x < ex; x++)
 		{
-			vec<2> baryCoords = lerp(bcL, bcR, (x - sx) / float(ex - sx));
-			int r = 255 * baryCoords.x();
-			int g = 255 * baryCoords.y();
-			int b = (255 - r - g);
-			mRenderTarget->color(x, y) = r + (g << 8) + (b << 16);
+			vec<3> baryCoords;
+			baryCoords.topRows<2>() = lerp(bcL, bcR, (x - sx) / float(ex - sx));
+			baryCoords[2] = 1.0f - baryCoords[0] - baryCoords[1];
+
+			vec<4> interPos = t.v[0].p * baryCoords[0] + t.v[1].p * baryCoords[1] + t.v[2].p * baryCoords[2];
+
+			float depth = interPos.z();
+			if (mRenderTarget->depth(x, y) > depth) continue;
+			mRenderTarget->depth(x, y) = depth;
+
+			mRenderTarget->color(x, y) = interPos.w() * 255.0f / 200.0f;
 		}
 	}
 }

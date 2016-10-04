@@ -3,6 +3,7 @@
 #include "ImagePanel.h"
 #include "Buffer.h"
 #include "Renderer.h"
+#include "Mesh.h"
 
 enum {
 	ID_SAVESCREEN = 1,
@@ -13,7 +14,7 @@ private:
 	ImagePanel * imagePanel;
 	Buffer mBuffer;
 	Renderer mRenderer;
-
+	Mesh cyllinder;
 
 	void OnExit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
@@ -21,7 +22,9 @@ private:
 	void OnIdle(wxIdleEvent &event);
 public:
 	PreviewFrame(const wxString& title, const wxPoint& position, const wxSize& size);
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
 	wxDECLARE_EVENT_TABLE();
+
 };
 
